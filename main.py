@@ -1,4 +1,5 @@
 import pygame
+from copy import deepcopy
 
 # init the pygame --> Mandatory
 pygame.init()
@@ -189,9 +190,46 @@ def get_possible_move_positions(i, baagh = False):
             if not is_filled(11):
                 possible_moves[11] = False
     return possible_moves
-print('\n\n')
-for i in range(1, 26):
-    print(i, get_possible_move_positions(i, True))
+
+def generate_states(state, baagh = False):
+    legal_states = []
+    if baagh:
+        for pos in state:
+            if state[pos] == 'b':
+                legal_moves_from_this_position = get_possible_move_positions(pos, True)
+                for next_pos, mareko in legal_moves_from_this_position.items():
+                    c_state = deepcopy(state)
+                    c_state[pos] = 'e'
+                    if mareko:
+                        c_state[mareko] = 'e'
+                    c_state[next_pos] = 'b'
+                    legal_states.append(c_state)
+    elif GOAT_COUNT + GOAT_DEAD < 20:
+        empty_pos = [pos for pos in state if state[pos] == 'e']
+        for pos in empty_pos:
+            c_state = deepcopy(state)
+            c_state[pos] = 'g'
+            legal_states.append(c_state)
+    else:
+        for pos in state:
+            if state[pos] == 'g':
+                legal_moves_from_this_position = get_possible_move_positions(pos, False)
+                for next_pos in legal_moves_from_this_position:
+                    c_state = deepcopy(state)
+                    c_state[pos] = 'e'
+                    c_state[next_pos] = 'g'
+                    legal_states.append(c_state)
+
+    return legal_states
+                
+                
+                        
+
+                        
+
+        
+    
+
 def draw_board():
     global board_points_pos
     # horizontal
@@ -222,18 +260,45 @@ baagh_dragging = False
 goat_dragging = False
 dragged_valid_rect  = None
 dragged_valid_pos = None
-def print_state():
-    global state
+
+def print_state(state):
     print(state[1], state[2], state[3], state[4], state[5])
     print(state[6], state[7], state[8], state[9], state[10])
     print(state[11], state[12], state[13], state[14], state[15])
     print(state[16], state[17], state[18], state[19], state[20])
     print(state[21], state[22], state[23], state[24], state[25])
     print('**********************')
+    
+def draw_state(state):
+    for pos in state:
+        if state[pos] == 'b':
+            rect = pos_rec[pos]
+            baagh_image_rect.center = rect.center
+            screen.blit(baagh_image, baagh_image_rect)
+        elif state[pos] == 'g':
+            rect = pos_rec[pos]
+            goat_image_rect.center = rect.center
+            screen.blit(goat_image, goat_image_rect)
+
+def check_win(state):            
+    # check win
+    if (GOAT_DEAD >= 5):
+        return 1
+    c = 0
+    for pos, player in state.items():
+        if player == 'b':
+            legals = get_possible_move_positions(pos, True)
+            if len(legals) == 0:
+                c+=1
+    return 2 if c==4 else -1 
+
+win_text = {
+    1:'Bagh won', 
+    2: 'Goat won'
+}         
 
 running = True
 while running:
-    # handling events
     screen.fill((23,45,67))
     draw_board()
     for event in pygame.event.get():
@@ -241,26 +306,26 @@ while running:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             for pos,valid_rect in valid_positions:
-                if (valid_rect.collidepoint(event.pos)):
-                    if baagh_turn:
-                        # baagh_draw_positions.append(valid_rect)
-                        if(pos in baagh_draw_positions):
-                            baagh_dragging = True
-                            dragged_valid_rect = valid_rect
-                            dragged_valid_pos = pos
-                            break
-                    else:
-                        if (len(goat_draw_positions) < 20 and not is_filled(pos)):
-                            goat_draw_positions.add(pos)
-                            state[pos] = 'g'
-                            baagh_turn = True
-                            print_state()
-                            break
-                        elif len(goat_draw_positions) >= 20:
-                            goat_dragging = True
-                            dragged_valid_rect = valid_rect
-                            dragged_valid_pos = pos
-                            break
+                if baagh_turn:
+                    if (valid_rect.collidepoint(event.pos)) and (
+                        pos in baagh_draw_positions
+                    ):
+                        baagh_dragging = True
+                        dragged_valid_rect = valid_rect
+                        dragged_valid_pos = pos
+                        break
+                elif (valid_rect.collidepoint(event.pos)):
+                    if (len(goat_draw_positions) < 20 and not is_filled(pos)):
+                        goat_draw_positions.add(pos)
+                        state[pos] = 'g'
+                        baagh_turn = True
+                        print_state()
+                        break
+                    elif len(goat_draw_positions) >= 20:
+                        goat_dragging = True
+                        dragged_valid_rect = valid_rect
+                        dragged_valid_pos = pos
+                        break
         elif event.type == pygame.MOUSEBUTTONUP:
             if(baagh_dragging or goat_dragging):
                 legal_pos = get_possible_move_positions(dragged_valid_pos, baagh_turn)
@@ -292,31 +357,16 @@ while running:
                             print_state()
                             break
 
-    for pos in baagh_draw_positions:
-        rect = pos_rec[pos]
-        baagh_image_rect.center = rect.center
-        screen.blit(baagh_image, baagh_image_rect)
-    for pos in goat_draw_positions:
-        rect = pos_rec[pos]
-        goat_image_rect.center = rect.center
-        screen.blit(goat_image, goat_image_rect)
-    
-    # check win
-    if(GOAT_DEAD >= 5):
-        print('Bagh won')
+    draw_state(state)
+
+
+    c_w = check_win(state)
+    if(c_w == -1):
+        pygame.display.update()
+    else:
+        print(win_text[c_w])
         break
-    
-    c = 0
-    for pos, player in state.items():
-        if player == 'b':
-            legals = get_possible_move_positions(pos, True)
-            if len(legals) == 0:
-                c+=1
-    print(c)
-    if c == 4:
-        print('GOAT WON')
-        break
+
     # mandatory
-    pygame.display.update()
 
 
