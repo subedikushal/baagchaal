@@ -1,4 +1,5 @@
 import pygame
+import random
 from copy import deepcopy
 
 # init the pygame --> Mandatory
@@ -8,21 +9,16 @@ WIDTH = 800
 HEIGHT = 800
 GOAT_COUNT =0
 GOAT_DEAD =0
-# create the screen
+
 screen = pygame.display.set_mode((WIDTH,HEIGHT)) # w * h
 
 
-#set title and icon
 pygame.display.set_caption("Baagchaal")
-# icon = pygame.image.load('xyz.png')
-# pygame.display.set_icon(icon)
 
 
 
 # Define board dimensions
 board_size =600
-board_x = (WIDTH - board_size) // 2
-board_y = (HEIGHT - board_size) // 2
 
 # Define line and circle properties
 line_width = 5
@@ -57,20 +53,10 @@ for row in range(5):
 
 
 state = {i: 'b' if i in [1, 5, 21, 25] else 'e' for i in range(1,26)}
-baagh_draw_positions =set()
 baagh_image = pygame.image.load('baagh.png')
-baagh_image_size = baagh_image.get_size()
-baagh_image_w = baagh_image_size[0]
-baagh_image_h = baagh_image_size[1]
-baagh_image_position = None
 baagh_image_rect = baagh_image.get_rect()
 
-goat_draw_positions =set()
 goat_image = pygame.image.load('goat.png')
-goat_image_size = goat_image.get_size()
-goat_image_w = goat_image_size[0]
-goat_image_h = goat_image_size[1]
-goat_image_position = None
 goat_image_rect = goat_image.get_rect()
 
 
@@ -78,15 +64,13 @@ goat_image_rect = goat_image.get_rect()
 valid_positions = []
 pos_rec = {}
 for i,pos in board_points_pos.items():
-    if i in [1, 5, 21, 25]:
-        baagh_draw_positions.add(i)
     r = pygame.Rect(pos[0]-25,pos[1]-25, 50, 50)
     pos_rec[i] = r
     valid_positions.append([i,r])
 
 def is_filled(pos):
-    global baagh_draw_positions, goat_draw_positions
-    return pos in baagh_draw_positions or pos in goat_draw_positions
+    # global baagh_draw_positions, goat_draw_positions
+    return state[pos] in ['g', 'b']
 
 
 
@@ -98,13 +82,13 @@ def get_possible_move_positions(i, baagh = False):
     if (r in pos_rec and i not in [5, 10, 15, 20,25]): 
         if not is_filled(r):
             possible_moves[r] = False
-        elif baagh and r+1 in pos_rec and not is_filled(r+1):
+        elif baagh and r+1 in pos_rec and not is_filled(r+1) and state[r] == 'g':
             possible_moves[r+1] = r
     l = i-1 #left
     if(l in pos_rec and i not in [1,6,11,16,21]): 
         if not is_filled(l):
             possible_moves[l] = False
-        elif baagh and l-1 in pos_rec and not is_filled(l-1):
+        elif baagh and l-1 in pos_rec and not is_filled(l-1) and state[l] == 'g':
             naagyo = l
             possible_moves[l-1] = l
     # get vertical
@@ -112,59 +96,145 @@ def get_possible_move_positions(i, baagh = False):
     if(t in pos_rec): 
         if not is_filled(t):
             possible_moves[t] = False
-        elif baagh and t-5 in pos_rec and not is_filled(t-5) and t-5 not in [1,2,3,4,5]:
+        elif baagh and t-5 in pos_rec and not is_filled(t-5) and t-5 not in [1,2,3,4,5] and state[t] == 'g':
             possible_moves[t-5] = t
     b = i+5 #bottom
     if(b in pos_rec): 
         if not is_filled(b):
             possible_moves[b] = False
-        elif baagh and b+5 in pos_rec and not is_filled(b+5) and b not in [21, 22, 23, 24, 25]:
+        elif baagh and b+5 in pos_rec and not is_filled(b+5) and b not in [21, 22, 23, 24, 25] and state[b] == 'g':
             possible_moves[b+5] = b
+
+            
+
     # get diagonal
+    if ( i == 1):
+        if not is_filled(7):
+            possible_moves[7] = False
+        elif baagh and not is_filled(13) and state[7] == 'g':
+            possible_moves[13] = 7
+
+    if ( i == 5):
+        if not is_filled(9):
+            possible_moves[9] = False
+        elif baagh and not is_filled(13) and state[9] == 'g':
+            possible_moves[13] = 9
+
+
+
+    if ( i == 7):
+        if not is_filled(1):
+            possible_moves[1] = False
+        if not is_filled(13):
+            possible_moves[13] = False
+        elif baagh and not is_filled(19) and state[13] == 'g':
+            possible_moves[19] =13 
+
+            
+    if ( i == 9):
+        if not is_filled(5):
+            possible_moves[5] = False
+        if not is_filled(13):
+            possible_moves[13] = False
+        elif baagh and not is_filled(17) and state[13] == 'g':
+            possible_moves[17] =13 
+            
+    if ( i == 13):
+        if not is_filled(7):
+            possible_moves[1] = False
+        elif baagh and not is_filled(1) and state[7] == 'g':
+            possible_moves[1] = 7
+
+        if not is_filled(19):
+            possible_moves[19] = False
+        elif baagh and not is_filled(25) and state[19] == 'g':
+            possible_moves[25] =19 
+
+        if not is_filled(9):
+            possible_moves[9] = False
+        elif baagh and not is_filled(5) and state[9] == 'g':
+            possible_moves[5] = 9
+
+        if not is_filled(17):
+            possible_moves[17] = False
+        elif baagh and not is_filled(21) and state[17] == 'g':
+            possible_moves[21] = 17
+
+    if ( i == 19):
+        if not is_filled(25):
+            possible_moves[25] = False
+        if not is_filled(13):
+            possible_moves[13] = False
+        elif baagh and not is_filled(7) and state[13] == 'g':
+            possible_moves[7] =13 
+    
+    if ( i == 17):
+        if not is_filled(21):
+            possible_moves[21] = False
+        if not is_filled(13):
+            possible_moves[13] = False
+        elif baagh and not is_filled(9) and state[13] == 'g':
+            possible_moves[9] =13 
+
+    if(i == 25):
+        if not is_filled(19):
+            possible_moves[19] = False
+        elif baagh and not is_filled(13) and state[19] == 'g':
+            possible_moves[13] = 19
+
+    if(i == 21):
+        if not is_filled(17):
+            possible_moves[17] = False
+        elif baagh and not is_filled(13) and state[17] == 'g':
+            possible_moves[13] = 17
+
+           
+    
+    # get square
     if(i in diags):
         if(i == 3):
             if not is_filled(7):
                 possible_moves[7] = False
-            elif baagh and not is_filled(11):
+            elif baagh and not is_filled(11) and state[7] == 'g':
                 possible_moves[11] = 7
 
             if not is_filled(9):
                 possible_moves[9] = False
-            elif baagh and not is_filled(15):
+            elif baagh and not is_filled(15) and state[9] == 'g':
                 possible_moves[15] = 9
 
         elif(i == 23):
             if not is_filled(17):
                 possible_moves[17] = False 
-            elif baagh and not is_filled(11):
+            elif baagh and not is_filled(11) and state[17] == 'g':
                 possible_moves[11] = 17 
 
             if not is_filled(19):
                 possible_moves[19] = False
-            elif baagh and not is_filled(15):
+            elif baagh and not is_filled(15) and state[19] == 'g':
                 possible_moves[15] = 19
 
         elif(i == 11):
             if not is_filled(17):
                 possible_moves[17] = False
-            elif baagh and not is_filled(23):
+            elif baagh and not is_filled(23) and state[17] == 'g':
                 possible_moves[23] = 17
 
             if not is_filled(7):
                 possible_moves[7] = False
-            elif baagh and not is_filled(3):
+            elif baagh and not is_filled(3) and state[7] == 'g':
                 possible_moves[3] = 7
 
 
         elif(i == 15):
             if not is_filled(9):
                 possible_moves[9] = False
-            elif baagh and not is_filled(3):
+            elif baagh and not is_filled(3) and state[9] == 'g':
                 possible_moves[3] = 9
 
             if not is_filled(19):
                 possible_moves[19] = False
-            elif baagh and not is_filled(23):
+            elif baagh and not is_filled(23) and state[19] == 'g':
                 possible_moves[23] = 19
 
 
@@ -244,11 +314,14 @@ def draw_board():
     pygame.draw.line(screen, line_color, board_points_pos[3], board_points_pos[23], line_width)
     pygame.draw.line(screen, line_color, board_points_pos[4], board_points_pos[24], line_width)
     pygame.draw.line(screen, line_color, board_points_pos[5], board_points_pos[25], line_width)
-    # diagonal
+    # square
     pygame.draw.line(screen, line_color, board_points_pos[3], board_points_pos[15], line_width)
     pygame.draw.line(screen, line_color, board_points_pos[15], board_points_pos[23], line_width)
     pygame.draw.line(screen, line_color, board_points_pos[23], board_points_pos[11], line_width)
     pygame.draw.line(screen, line_color, board_points_pos[11], board_points_pos[3], line_width)
+    #diagonal
+    pygame.draw.line(screen, line_color, board_points_pos[1], board_points_pos[25], line_width)
+    pygame.draw.line(screen, line_color, board_points_pos[5], board_points_pos[21], line_width)
 
     global valid_positions
     for _,pos in valid_positions:
@@ -258,7 +331,6 @@ def draw_board():
 baagh_turn = False
 baagh_dragging = False
 goat_dragging = False
-dragged_valid_rect  = None
 dragged_valid_pos = None
 
 def print_state(state):
@@ -301,62 +373,52 @@ running = True
 while running:
     screen.fill((23,45,67))
     draw_board()
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            for pos,valid_rect in valid_positions:
-                if baagh_turn:
-                    if (valid_rect.collidepoint(event.pos)) and (
-                        pos in baagh_draw_positions
+    if not baagh_turn:
+        legal_states = generate_states(state, False)
+        state = random.choice(legal_states)
+        GOAT_COUNT +=1
+        baagh_turn = True
+    else:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                for pos,valid_rect in valid_positions:
+                    if (
+                        (valid_rect.collidepoint(event.pos))
+                        and (state[pos] == 'b')
                     ):
                         baagh_dragging = True
-                        dragged_valid_rect = valid_rect
                         dragged_valid_pos = pos
                         break
-                elif (valid_rect.collidepoint(event.pos)):
-                    if (len(goat_draw_positions) < 20 and not is_filled(pos)):
-                        goat_draw_positions.add(pos)
-                        state[pos] = 'g'
-                        baagh_turn = True
-                        print_state()
-                        break
-                    elif len(goat_draw_positions) >= 20:
-                        goat_dragging = True
-                        dragged_valid_rect = valid_rect
-                        dragged_valid_pos = pos
-                        break
-        elif event.type == pygame.MOUSEBUTTONUP:
-            if(baagh_dragging or goat_dragging):
-                legal_pos = get_possible_move_positions(dragged_valid_pos, baagh_turn)
-                for pos,valid_rect in valid_positions:
-                    if (valid_rect.collidepoint(event.pos)): 
-                        if (baagh_turn and baagh_dragging and pos in legal_pos ):
-                            baagh_draw_positions.remove(dragged_valid_pos)
-                            if legal_pos[pos]:
+                                    # else:
+                                    # elif (valid_rect.collidepoint(event.pos)):
+                                    #     if (len(goat_draw_positions) < 20 and not is_filled(pos)):
+                                    #         goat_draw_positions.add(pos)
+                                    #         state[pos] = 'g'
+                                    #         baagh_turn = True
+                                    #         print_state()
+                                    #         break
+                                    #     elif len(goat_draw_positions) >= 20:
+                                    #         goat_dragging = True
+                                    #         dragged_valid_rect = valid_rect
+                                    #         dragged_valid_pos = pos
+                                    #         break
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if (baagh_dragging or goat_dragging):
+                    legal_pos = get_possible_move_positions(dragged_valid_pos, baagh_turn)
+                    for pos,valid_rect in valid_positions:
+                        if (valid_rect.collidepoint(event.pos)) and (
+                            baagh_dragging and pos in legal_pos
+                        ):
+                            if legal_pos[pos] and state[legal_pos[pos]] == 'g':
                                 GOAT_DEAD +=1
-                                goat_draw_positions.remove(legal_pos[pos])
                                 state[legal_pos[pos]] = 'e'
                             state[dragged_valid_pos] = 'e'
-                            baagh_draw_positions.add(pos)
                             state[pos] = 'b'
-                            print_state()
                             baagh_turn = False
                             baagh_dragging = False
                             break
-                        if (not baagh_turn and goat_dragging and pos in legal_pos ):
-                            goat_draw_positions.remove(dragged_valid_pos)
-                            state[dragged_valid_pos] = 'e'
-                            goat_draw_positions.add(pos)
-                            for p in pos_rec:
-                                if pos_rec[p] == valid_rect:
-                                    state[p] = 'g'
-                                    break
-                            baagh_turn = True
-                            goat_dragging = False
-                            print_state()
-                            break
-
     draw_state(state)
 
 
