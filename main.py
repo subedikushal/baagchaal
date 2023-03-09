@@ -79,7 +79,7 @@ class MCTS:
 
     def expand(self, node):
         # generate legal states (moves) for the given node
-        states = node.board.generate_states()
+        states = node.board.generate_states(filter=True)
 
         # loop over generated states (moves)
         for state in states:
@@ -353,7 +353,7 @@ class Board:
                     possible_moves[11] = False
         return possible_moves
 
-    def generate_states(self):
+    def generate_states(self, filter=False):
         baagh = self.player
         state = self.state
         legal_states = []
@@ -374,13 +374,13 @@ class Board:
             safe_positions = self.goat_safe_positions()
             if self.GOAT_COUNT < 20:
                 empty_pos = [pos for pos in state if state[pos] == '.']
-                if len(saving_positions) > 0:
+                if filter and len(saving_positions) > 0:
                     for p in empty_pos:
                         if p in saving_positions:
                             c_state = deepcopy(state)
                             c_state[p] = 'g'
                             legal_states.append(c_state)
-                elif len(safe_positions) > 0:
+                elif filter and len(safe_positions) > 0:
                     for p in empty_pos:
                         if p in safe_positions:
                             c_state = deepcopy(state)
@@ -398,12 +398,12 @@ class Board:
                         legal_moves_from_this_position = self.get_possible_move_positions(
                             pos)
                         for next_pos in legal_moves_from_this_position:
-                            if len(saving_positions) > 0 and next_pos in saving_positions:
+                            if filter and len(saving_positions) > 0 and next_pos in saving_positions:
                                 c_state = deepcopy(state)
                                 c_state[pos] = '.'
                                 c_state[next_pos] = 'g'
                                 legal_states.append(c_state)
-                            elif len(safe_positions) > 0 and next_pos in safe_positions:
+                            elif filter and len(safe_positions) > 0 and next_pos in safe_positions:
                                 c_state = deepcopy(state)
                                 c_state[pos] = '.'
                                 c_state[next_pos] = 'g'
@@ -451,7 +451,7 @@ class Board:
 
     def random_play(self):
         while (self.check_win() == -1):
-            legal_states = self.generate_states()
+            legal_states = self.generate_states(filter=True)
             if len(legal_states) == 0:
                 print('???????????????????????????????')
                 self.print_state()
